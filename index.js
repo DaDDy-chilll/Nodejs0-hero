@@ -25,7 +25,14 @@ const friends = [
 ];
 server.on("request", (req, res) => {
   const items = req.url.split("/");
-  if (items[1] === "friends") {
+  if (req.method === "POST" && items[1] === "friends") {
+    req.on("data", (data) => {
+      const friend = data.toString();
+      console.log("Request", friend);
+      friends.push(JSON.parse(friend));
+    });
+    req.pipe(res);
+  } else if (req.method === "GET" && items[1] === "friends") {
     // res.writeHead(200, {
     //   "Content-type": "application/json",
     // });
@@ -37,7 +44,7 @@ server.on("request", (req, res) => {
     } else {
       res.end(JSON.stringify(friends));
     }
-  } else if (items[1] === "message") {
+  } else if (req.method === "GET" && items[1] === "message") {
     res.setHeader("Content-type", "text/html");
     res.write("<html>");
     res.write("<body>");
@@ -48,7 +55,7 @@ server.on("request", (req, res) => {
     res.write("</body>");
     res.write("</html>");
     res.end();
-  } else if (items[1] === "") {
+  } else if (req.method === "GET" && req.url === "/") {
     res.statusCode = 200;
     res.setHeader("Content-type", "text/html");
     res.write("<h1>This is Home page</h1>");
