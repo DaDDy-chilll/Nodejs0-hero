@@ -18,9 +18,10 @@ fs.createReadStream("./plants-project/2.1 kepler_data.csv")
     })
   )
   .on("data", (data) => {
-    if (isHabitablePlanet(data)) {
-      habitablePlanets.push(data);
-    }
+    // if (isHabitablePlanet(data)) {
+    //   habitablePlanets.push(data);
+    // }
+    console.log(isHabitablePlanet(data));
   })
   .on("error", (err) => {
     console.log(err);
