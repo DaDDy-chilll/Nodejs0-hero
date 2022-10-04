@@ -1,3 +1,4 @@
+// const launches = require('./launches.mongo')
 const launches = new Map();
 let lastestFlightNumber = 100;
 const launch = {
@@ -6,7 +7,7 @@ const launch = {
   rocket: "Explorer IS1",
   launchDate: new Date("December 27, 2030"),
   target: "Kepler-442 b",
-  customer: ["DaDDy", "NASA"],
+  customers: ["DaDDy", "NASA"],
   upcoming: true,
   success: true,
 };
@@ -23,7 +24,7 @@ function addNewLaunch(launch) {
     Object.assign(launch, {
       success: true,
       upcoming: true,
-      customer: ["DaDDy Chill", "NASA"],
+      customers: ["DaDDy Chill", "NASA"],
       flightNumber: lastestFlightNumber,
     })
   );
