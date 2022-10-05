@@ -1,6 +1,7 @@
-// const launches = require('./launches.mongo')
-const launches = new Map();
-let lastestFlightNumber = 100;
+const launchesDatabase = require('./launches.mongo');
+const planets = require('./planets.mongo');
+const DEFAULT_FLIGHT_NUMBER = 100;
+
 const launch = {
   flightNumber: 100,
   mission: "Kepler Exploration X",
@@ -11,41 +12,85 @@ const launch = {
   upcoming: true,
   success: true,
 };
-launches.set(launch.flightNumber, launch);
+saveLaunches(launch)
 
-function getAllLaunches() {
-  return Array.from(launches.values());
+async function getAllLaunches() {
+  return await launchesDatabase.find({},{'_id':0,'__v':0});
 }
 
-function addNewLaunch(launch) {
-  lastestFlightNumber++;
-  launches.set(
-    lastestFlightNumber,
-    Object.assign(launch, {
-      success: true,
-      upcoming: true,
-      customers: ["DaDDy Chill", "NASA"],
-      flightNumber: lastestFlightNumber,
-    })
-  );
+async function getLatestFlightNumber(){
+  const latestLaunch = await launchesDatabase
+  .findOne().sort('-flightNumber');
+  if(!latestLaunch){
+    return DEFAULT_FLIGHT_NUMBER;
+  }
+  return latestLaunch.flightNumber;
 }
 
-function existsLaunchWithId(launchId) {
-  return launches.has(launchId);
+async function saveLaunches(launch){
+  const planet = await planets.findOne({
+    keplerName:launch.target,
+  })
+  if(!planet){
+    throw new Error('No matching planet found!')
+  }
+  await launchesDatabase.findOneAndUpdate({
+    flightNumber:launch.flightNumber,
+  },launch,{
+    upsert:true,
+  })
 }
 
-function abortLaunchById(launchId) {
-  const abroted = launches.get(launchId);
-  console.log(abroted);
-  abroted.upcoming = false;
-  abroted.success = false;
-  console.log(abroted);
-  return abroted;
+async function scheduleNewLaunch(launch){
+  const newFlightNumber = await getLatestFlightNumber() +1;
+  const newLaunch = Object.assign(launch,{
+    success: true,
+    upcoming: true,
+    customers: ["DaDDy Chill", "NASA"],
+    flightNumber:newFlightNumber,
+  });
+  await saveLaunches(newLaunch)
+}
+
+// function addNewLaunch(launch) {
+//   lastestFlightNumber++;
+//   launches.set(
+//     lastestFlightNumber,
+//     Object.assign(launch, {
+//       success: true,
+//       upcoming: true,
+//       customers: ["DaDDy Chill", "NASA"],
+//       flightNumber: lastestFlightNumber,
+//     })
+//   );
+// }
+
+async function existsLaunchWithId(launchId) {
+  return await launchesDatabase.findOne({
+    flightNumber:launchId,
+  });
+}
+
+async function abortLaunchById(launchId) {
+  const aborted = await launchesDatabase.updateOne({
+    flightNumber:launchId
+  },{
+    upcoming:false,
+    success:false,
+  })
+  return aborted.matchedCount === 1 && aborted.modifiedCount === 1;
+  // await launchesDatabase.findOneAndDelete({flightNumber:launchId})
+  // const abroted = launchesDatabase.findOne({flightNumber:launchId});
+  // console.log(abroted);
+  // abroted.upcoming = false;
+  // abroted.success = false;
+  // console.log(abroted);
+  // return abroted;
 }
 
 module.exports = {
-  addNewLaunch,
   getAllLaunches,
   existsLaunchWithId,
   abortLaunchById,
+  scheduleNewLaunch,
 };
