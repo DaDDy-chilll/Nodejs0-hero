@@ -1,18 +1,63 @@
+const axios = require('axios');
 const launchesDatabase = require('./launches.mongo');
 const planets = require('./planets.mongo');
 const DEFAULT_FLIGHT_NUMBER = 100;
 
 const launch = {
-  flightNumber: 100,
-  mission: "Kepler Exploration X",
-  rocket: "Explorer IS1",
-  launchDate: new Date("December 27, 2030"),
-  target: "Kepler-442 b",
-  customers: ["DaDDy", "NASA"],
-  upcoming: true,
-  success: true,
+  flightNumber: 100, //exist flight_number
+  mission: "Kepler Exploration X", //exist name
+  rocket: "Explorer IS1", //exist rocket.name
+  launchDate: new Date("December 27, 2030"), //exist date_local
+  target: "Kepler-442 b", //not applicable
+  customers: ["DaDDy", "NASA"], //exist payload.customer for each payload
+  upcoming: true, //exist upcoming
+  success: true, //exist success 
 };
-saveLaunches(launch)
+saveLaunches(launch);
+
+const SPACEX_API = 'https://api.spacexdata.com/v4/launches/query'
+async function loadLaunchData(){
+  console.log('DownLoad Data... ')
+  const response =  await axios.post(SPACEX_API,{
+    query:{},
+    options:{
+        pagination:false,
+        populate:[
+            {
+                path:"rocket",
+                select:{
+                    name:1
+                }
+                
+            },
+            {
+                path:"payloads",
+                select:{
+                customers:1
+                }
+            }
+        ]
+    }
+});
+  const launchDocs = response.data.docs;https://Nodejs0-hero.daddy-chilll.repl.co
+  for (let launchDoc of launchDocs) {
+    const payloads = launchDoc['payloads'];
+    const customers = payloads.flatMap((payload)=>{
+      return payload['customers'];
+    })
+    const launch = {
+          flightNumber: launchDoc['flight_number'],
+          mission: launchDoc['name'] ,
+          rocket: launchDoc['rocket']['name'],
+          launchDate: launchDoc['date_local'],
+          target: "Kepler-442 b", //not applicable
+          customers,
+          upcoming: launchDoc['upcoming'] ,
+          success: launchDoc['success'] ,
+    }
+  console.log(`${launch.flightNumber} && ${launch.mission}`);
+  }
+}
 
 async function getAllLaunches() {
   return await launchesDatabase.find({},{'_id':0,'__v':0});
@@ -93,4 +138,5 @@ module.exports = {
   existsLaunchWithId,
   abortLaunchById,
   scheduleNewLaunch,
+  loadLaunchData,
 };
