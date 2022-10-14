@@ -1,13 +1,15 @@
 const request = require("supertest");
 const app = require("../../app");
-const {mongoConnect,mongoDisconnect} = require('../../services/mongo');
+const { mongoConnect, mongoDisconnect } = require("../../services/mongo");
+const { loadPlanetsData } = require("../../models/planets.model");
 
-describe('Test Launch API',()=>{
-  beforeAll(async ()=>{
+describe("Test Launch API", () => {
+  beforeAll(async () => {
     await mongoConnect();
+    await loadPlanetsData();
   });
 
-  afterAll(async()=>{
+  afterAll(async () => {
     await mongoDisconnect();
   });
 
@@ -19,7 +21,7 @@ describe('Test Launch API',()=>{
         .expect(200);
     });
   });
-  
+
   describe("Test POST /launch", () => {
     const completeLaunchData = {
       mission: "USS Enterprise",
@@ -49,7 +51,7 @@ describe('Test Launch API',()=>{
       expect(requestDate).toBe(responseDate);
       expect(response.body).toMatchObject(launchDataWithoutData);
     });
-  
+
     test("It should catch missing required properties", async () => {
       const response = await request(app)
         .post("/v1/launches")
@@ -71,6 +73,4 @@ describe('Test Launch API',()=>{
       });
     });
   });
-})
-
-
+});
