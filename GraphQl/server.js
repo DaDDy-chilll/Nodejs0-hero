@@ -7,6 +7,19 @@ const { makeExecutableSchema } = require("@graphql-tools/schema");
 const typeArray = loadFilesSync(path.join(__dirname, "**/*.graphql"));
 const schema = makeExecutableSchema({
   typeDefs: typeArray,
+  resolvers: {
+    Query: {
+      products: async (parent) => {
+        console.log("Getting the products...");
+        const products = await Promise.resolve(parent.products);
+        return products;
+      },
+      orders: (parent) => {
+        console.log("Getting the orders...");
+        return parent.orders;
+      },
+    },
+  },
 });
 
 const root = {
